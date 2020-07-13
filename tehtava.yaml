@@ -1,6 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Kati Demo CloudFormation
 
+Parameters:
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+
 Resources:
   Katinampari:
     Type: AWS::S3::Bucket
@@ -11,3 +16,18 @@ Resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName : Katinjono
+
+  katinEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      KeyName: kati-demo
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: katicfec2
+        - Key: Owner
+          Value: Kati
+
+
+
