@@ -29,5 +29,21 @@ Resources:
         - Key: Owner
           Value: Kati
 
+  KatinALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: KatinALB
+      SecurityGroups:
+        - sg-0967ce774e311591c
+      Subnets:
+        - subnet-2f0cdc70
+        - subnet-46b73e48
+        - subnet-9270a2b3
+      Tags:
+        - Key: Owner
+          Value: Kati
+      Type: application
+
+
 
 
