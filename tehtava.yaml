@@ -6,3 +6,8 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: katin-cloudformation-ampari
+
+  KatinSQS:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName : Katinjono
