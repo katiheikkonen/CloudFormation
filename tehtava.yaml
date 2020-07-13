@@ -1,0 +1,8 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Kati Demo CloudFormation
+
+Resources:
+  Katinampari:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: katin-cloudformation-ampari
