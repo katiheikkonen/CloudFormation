@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Kati Demo CloudFormation VPC
+
+Resources:
+
+#  VPC
+
+  KatiVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: Name
+          Value: KatiVPC
+        - Key: Owner
+          Value: Kati
+
+#  SUBNETS
+
+  katiSubnet1pub:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: Name
+          Value: Katisb1
+        - Key: Owner
+          Value: Kati
+
+  katiSubnet2pri:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: Name
+          Value: Katisb2
+        - Key: Owner
+          Value: Kati
+
+  katiSubnet3pri:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: "us-east-1c"
+      Tags:
+        - Key: Name
+          Value: Katisb3
+        - Key: Owner
+          Value: Kati
+
+#INTERNET GATEWAY
+
+  KatiInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: KatiIG
+        - Key: Owner
+          Value: Kati
+
+# VPC GATEWAY ATTACHMENT
+
+  KatiAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      InternetGatewayId:
+        Ref: KatiInternetGateway
+
+#  NAT GATEWAY
+
+  KatiNATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        Fn::GetAtt:
+          - ElasticIP
+          - AllocationId
+      SubnetId:
+        Ref: katiSubnet1pub
+      Tags:
+        - Key: Name
+          Value: KatiIG
+        - Key: Owner
+          Value: Kati
+
+  ElasticIP:
+    DependsOn: KatiAttachGateway
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+#  ROUTES
+
+  Route1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId:
+        Ref: RouteTable1
+      GatewayId:
+        Ref: KatiInternetGateway
+
+  Route2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: RouteTable2
+      NatGatewayId:
+        Ref: KatiNATGateway
+
+  Route3:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: RouteTable3
+      NatGatewayId:
+        Ref: KatiNATGateway
+
+#  ROUTETABLES
+
+  RouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      Tags:
+        - Key: Name
+          Value: kati-1-routetable
+        - Key: Owner
+          Value: Kati
+
+  RouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      Tags:
+        - Key: Name
+          Value: kati-2-routetable
+        - Key: Owner
+          Value: Kati
+
+  RouteTable3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: KatiVPC
+      Tags:
+        - Key: Name
+          Value: kati-3-routetable
+        - Key: Owner
+          Value: Kati
+
+#  SUBNET ROUTETABLE ASSOCIATIONS
+
+  SubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: katiSubnet1pub
+      RouteTableId:
+        Ref: RouteTable1
+
+  SubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: katiSubnet2pri
+      RouteTableId:
+        Ref: RouteTable2
+
+  SubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: katiSubnet3pri
+      RouteTableId:
+        Ref: RouteTable3
