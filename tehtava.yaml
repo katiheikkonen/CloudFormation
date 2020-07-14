@@ -5,6 +5,18 @@ Parameters:
   LatestAmiId:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  ApplicationPort:
+    Type: Number
+    Default: 80
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+  DefaultVPC:
+    Type: String
+    Default: vpc-bc8f6cc1
+
 
 Resources:
   Katinampari:
@@ -22,20 +34,22 @@ Resources:
     Properties:
       ImageId: !Ref LatestAmiId
       KeyName: kati-demo
-      InstanceType: t2.micro
+      InstanceType: !Ref InstanceTypeParameter
+      SecurityGroupIds:
+        - !Ref InstanceSG
       Tags:
         - Key: Name
           Value: katicfec2
         - Key: Owner
           Value: Kati
 
-  KatinALB1:
+  KatinALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: KatinALB1
+      Name: KatinALB
       Scheme: internet-facing
       SecurityGroups:
-        - sg-0967ce774e311591c
+        - !Ref LoadbalancerSG
       Subnets:
         - subnet-2f0cdc70
         - subnet-46b73e48
@@ -45,12 +59,37 @@ Resources:
           Value: Kati
       Type: application
 
+  InstanceSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG for EC2
+      GroupName: Kati-Instance-SG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ApplicationPort
+          ToPort: !Ref ApplicationPort
+          SourceSecurityGroupId: !Ref LoadbalancerSG
+      Tags:
+        - Key: Owner
+          Value: Kati
+      VpcId: !Ref DefaultVPC
+
+  LoadbalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SG for ALB
+      GroupName: Kati-loadbalancer-SG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ApplicationPort
+          ToPort: !Ref ApplicationPort
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Owner
+          Value: Kati
+      VpcId: !Ref DefaultVPC
+
 Outputs:
   KatinloadbalancerDNSName:
     Description: The DNS name of the application load balancer
-    Value: !GetAtt KatinALB1.DNSName
-
-
-
-
-
+    Value: !GetAtt KatinALB.DNSName
