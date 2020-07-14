@@ -89,6 +89,27 @@ Resources:
           Value: Kati
       VpcId: !Ref DefaultVPC
 
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref KatinALB
+      Port: 80
+      Protocol: HTTP
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: kati-alb-targetgroup
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref DefaultVPC
+      Tags:
+        - Key: Owner
+          Value: Kati
+
 Outputs:
   KatinloadbalancerDNSName:
     Description: The DNS name of the application load balancer
