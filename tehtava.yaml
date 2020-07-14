@@ -29,10 +29,11 @@ Resources:
         - Key: Owner
           Value: Kati
 
-  KatinALB:
+  KatinALB1:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: KatinALB
+      Name: KatinALB1
+      Scheme: internet-facing
       SecurityGroups:
         - sg-0967ce774e311591c
       Subnets:
@@ -43,6 +44,12 @@ Resources:
         - Key: Owner
           Value: Kati
       Type: application
+
+Outputs:
+  KatinloadbalancerDNSName:
+    Description: The DNS name of the application load balancer
+    Value: !GetAtt KatinALB1.DNSName
+
 
 
 
