@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kati Demo CloudFormation
+Description: Kati Demo tehtava1
 
 Parameters:
   LatestAmiId:
-    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
-    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   ApplicationPort:
     Type: Number
     Default: 80
@@ -13,10 +13,6 @@ Parameters:
     Default: t2.micro
     AllowedValues:
       - t2.micro
-  DefaultVPC:
-    Type: String
-    Default: vpc-bc8f6cc1
-
 
 Resources:
   Katinampari:
@@ -29,19 +25,19 @@ Resources:
       Properties:
         QueueName : Katinjono
 
-  katinEC2:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: !Ref LatestAmiId
-      KeyName: kati-demo
-      InstanceType: !Ref InstanceTypeParameter
-      SecurityGroupIds:
-        - !Ref InstanceSG
-      Tags:
-        - Key: Name
-          Value: katicfec2
-        - Key: Owner
-          Value: Kati
+#  KatinEC2:
+#    Type: AWS::EC2::Instance
+#    Properties:
+#      ImageId: !Ref LatestAmiId
+#      KeyName: kati-demo
+#      InstanceType: !Ref InstanceTypeParameter
+#      SecurityGroupIds:
+#        - !Ref InstanceSG
+#      Tags:
+#        - Key: Name
+#          Value: kati-ec2
+#        - Key: Owner
+#          Value: Kati
 
   KatinALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -51,9 +47,9 @@ Resources:
       SecurityGroups:
         - !Ref LoadbalancerSG
       Subnets:
-        - subnet-2f0cdc70
-        - subnet-46b73e48
-        - subnet-9270a2b3
+        - !GetAtt KatiNestedStack.Outputs.KatiSubnetId1
+        - !GetAtt KatiNestedStack.Outputs.KatiSubnetId2
+        - !GetAtt KatiNestedStack.Outputs.KatiSubnetId3
       Tags:
         - Key: Owner
           Value: Kati
@@ -72,7 +68,7 @@ Resources:
       Tags:
         - Key: Owner
           Value: Kati
-      VpcId: !Ref DefaultVPC
+      VpcId: !GetAtt KatiNestedStack.Outputs.KatiVPCId
 
   LoadbalancerSG:
     Type: AWS::EC2::SecurityGroup
@@ -87,7 +83,7 @@ Resources:
       Tags:
         - Key: Owner
           Value: Kati
-      VpcId: !Ref DefaultVPC
+      VpcId: !GetAtt KatiNestedStack.Outputs.KatiVPCId
 
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -105,10 +101,52 @@ Resources:
       Name: kati-alb-targetgroup
       Port: 80
       Protocol: HTTP
-      VpcId: !Ref DefaultVPC
+      VpcId: !GetAtt KatiNestedStack.Outputs.KatiVPCId
       Tags:
         - Key: Owner
           Value: Kati
+
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: kati.asg
+      VPCZoneIdentifier:
+        - !GetAtt KatiNestedStack.Outputs.KatiSubnetId1
+        - !GetAtt KatiNestedStack.Outputs.KatiSubnetId2
+        - !GetAtt KatiNestedStack.Outputs.KatiSubnetId3
+      LaunchConfigurationName: !Ref LaunchConfigKati
+      MaxSize: 3
+      MinSize: 1
+      DesiredCapacity: 2
+      TargetGroupARNs:
+        - !Ref TargetGroup
+
+  LaunchConfigKati:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceTypeParameter
+      SecurityGroups:
+        - !Ref InstanceSG
+      KeyName: kati-demo
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+            - "\n"
+            - - "#!/bin/bash"
+              - "amazon-linux-extras install epel"
+              - "amazon-linux-extras install nginx1"
+              - "systemctl start nginx"
+
+  KatiNestedStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Tags:
+        - Key: Name
+          Value: katistack
+        - Key: Owner
+          Value: Kati
+      TemplateURL: https://kati-bucket-cloudformation.s3.amazonaws.com/tehtava2.yaml
 
 Outputs:
   KatinloadbalancerDNSName:

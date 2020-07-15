@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kati Demo CloudFormation VPC
+Description: Kati Demo tehtava2
 
 Resources:
 
@@ -29,6 +29,7 @@ Resources:
           Value: Katisb1
         - Key: Owner
           Value: Kati
+      MapPublicIpOnLaunch: true
 
   katiSubnet2pri:
     Type: AWS::EC2::Subnet
@@ -90,7 +91,7 @@ Resources:
         Ref: katiSubnet1pub
       Tags:
         - Key: Name
-          Value: KatiIG
+          Value: KatiNG
         - Key: Owner
           Value: Kati
 
@@ -99,6 +100,11 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+      Tags:
+        - Key: Name
+          Value: KatiEIP
+        - Key: Owner
+          Value: Kati
 
 #  ROUTES
 
@@ -189,3 +195,21 @@ Resources:
         Ref: katiSubnet3pri
       RouteTableId:
         Ref: RouteTable3
+
+Outputs:
+
+  KatiVPCId:
+    Description: Katin VPCn Id
+    Value: !Ref KatiVPC
+
+  KatiSubnetId1:
+    Description: Katin Subnet1 Id
+    Value: !Ref katiSubnet1pub
+
+  KatiSubnetId2:
+    Description: Katin Subnet2 Id
+    Value: !Ref katiSubnet2pri
+
+  KatiSubnetId3:
+    Description: Katin Subnet3 Id
+    Value: !Ref katiSubnet3pri
